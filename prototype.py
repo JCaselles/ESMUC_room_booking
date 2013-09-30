@@ -93,7 +93,7 @@ class AsimutSession (object):
 
         url = "%s%s" % (self.BASE_URL, self.SERVER_CALLS['book'])
         self.requests_session.post(url, data=payload)
-        return self.get_last_booking_id(date, roomgroup)
+        return self.get_last_booking_id(date, roomgroup)  # This is not save
 
     def get_last_booking_id(self, date, roomgroup_id):
 
