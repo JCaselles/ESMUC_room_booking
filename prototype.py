@@ -8,11 +8,16 @@
 # Copyright 2013 Arnau Orriols. All Rights Reserved.
 
 import requests
-from sys import argv
+from sys import argv, exit
 
 class AsimutSession (object):
 
-    LOGIN_URL = "https://esmuc.asimut.net/public/login.php"
+    BASE_URL = "https://esmuc.asimut.net/public/"
+    SERVER_CALLS = {'login' : 'login.php',
+                    'book' : 'async-event-save.php',
+                    'cancel' : 'async-event-cancel.php',
+                    'fetch events' : 'async_fetchevents.php'
+    }
 
     LOCATIONGROUPS_ID = {'cabina' : '6',
                           'instrument individual' : '5',
@@ -64,17 +69,84 @@ class AsimutSession (object):
 
         payload = {'authenticate-useraccount' : user,
                    'authenticate-password' : password}
+        url = "%s%s" % (self.BASE_URL, self.SERVER_CALLS['login'])
 
         self.requests_session = requests.session()
         self.requests_session.cookies = \
         requests.cookies.cookiejar_from_dict({'asimut-width' : '640'})
-        print self.requests_session.post(self.LOGIN_URL, data=payload).content
+        self.requests_session.post(url, data=payload).content
 
+
+    def book_room(self, room, date, starttime, endtime, description=''):
+
+        room_id = self.find_room_id_by_name(room)
+        roomgroup = self.find_roomgroup_by_room_id(room_id)
+
+        payload = {'event-id' : '0',
+                   'location-id' : room_id,
+                   'date' : date,
+                   'starttime' : starttime,
+                   'endtime' : endtime,
+                   'location' : room,
+                   'description' : description
+        }
+
+        url = "%s%s" % (self.BASE_URL, self.SERVER_CALLS['book'])
+        self.requests_session.post(url, data=payload)
+        return self.get_last_booking_id(date, roomgroup)
+
+    def get_last_booking_id(self, date, roomgroup_id):
+
+        url = "%s%s" % (self.BASE_URL, self.SERVER_CALLS['fetch events'])
+        date = "-".join(reversed(date.split('/')))
+        payload = {'starttime' : date,
+                   'endtime' : date,
+                   'locationgroup' : "-%s" % roomgroup_id
+        }
+
+        response = self.requests_session.get(url, params=payload).json()
+        book_ids = [book[0] for book in response]
+        return sorted(book_ids)[-1]
+
+
+    def cancel_last_book(self, last_book_id):
+
+        payload = {'id' : last_book_id}
+        url = "%s%s" % (self.BASE_URL, self.SERVER_CALLS['cancel'])
+
+        response = None
+        while not response:
+            response = self.requests_session.get(url, params=payload).json()
+            payload['id'] = str(int(payload['id'])-1)
+        return response
+
+    def find_room_id_by_name(self, room_name):
+
+        for room_group in self.LOCATIONGROUPS_ID.itervalues():
+            if room_name in self.LOCATIONS_ID[room_group].keys():
+                return self.LOCATIONS_ID[room_group][room_name]
+
+        exit("Room doesn't exist")
+
+    def find_roomgroup_by_room_id(self, room_id):
+
+        for room_group in self.LOCATIONGROUPS_ID.itervalues():
+            if room_id in self.LOCATIONS_ID[room_group].values():
+                return room_group
+        exit("Error")
 
 if __name__ == "__main__":
-    
-    if len(argv) == 3:
-        AsimutSession().login(argv[1], argv[2])
+
+    if len(argv) == 8:
+        Session = AsimutSession()
+        Session.login(argv[1], argv[2])
+        book_id = Session.book_room(argv[3], argv[4],
+                                    argv[5], argv[6],
+                                    argv[7]
+        )
+        print Session.cancel_last_book(book_id)
     else:
-        print "\nUsage: '$ python prototype.py <username> <password>'\n"
-        print AsimutSession().LOCATIONS_ID
+        print "\nUsage: '$ python prototype.py <username> <password> " \
+              "<room(ex:'A340')> <day(ex:'1/10/2013')> " \
+              "<start_time (ex:'21:00')> <end_time(ex:'21:30')> " \
+              "<description>"
