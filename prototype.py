@@ -8,7 +8,7 @@
 # Copyright 2013 Arnau Orriols. All Rights Reserved.
 
 import requests
-
+from sys import argv
 
 class AsimutSession (object):
 
@@ -43,8 +43,12 @@ class AsimutSession (object):
         self.requests_session = requests.session()
         self.requests_session.cookies = \
         requests.cookies.cookiejar_from_dict({'asimut-width' : '640'})
-        response = self.requests_session.post(self.LOGIN_URL, data=payload)
-        return requests_session
+        print self.requests_session.post(self.LOGIN_URL, data=payload).content
+        
 
 if __name__ == "__main__":
-    AsimutSession().login()
+    
+    if len(argv) == 3:
+        AsimutSession().login(argv[1], argv[2])
+    else:
+        print "\nUsage: '$ python prototype.py <username> <password>'\n"
