@@ -64,6 +64,8 @@ class AsimutSession (object):
                               )
     })
 
+    own_book_ids = []
+
 
     def login(self, user, password):
 
@@ -93,7 +95,9 @@ class AsimutSession (object):
 
         url = "%s%s" % (self.BASE_URL, self.SERVER_CALLS['book'])
         self.requests_session.post(url, data=payload)
-        return self.get_last_booking_id(date, roomgroup)  # This is not save
+        # This is not save
+        self.own_book_ids.append(self.get_last_booking_id(date, roomgroup))
+        return self.own_book_ids[-1]
 
     def get_last_booking_id(self, date, roomgroup_id):
 
@@ -118,6 +122,7 @@ class AsimutSession (object):
         while not response:
             response = self.requests_session.get(url, params=payload).json()
             payload['id'] = str(int(payload['id'])-1)
+        self.own_book_ids.pop()
         return response
 
     def find_room_id_by_name(self, room_name):
