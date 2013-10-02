@@ -20,7 +20,8 @@ class AsimutSession (object):
                     'book' : 'async-event-save.php',
                     'cancel' : 'async-event-cancel.php',
                     'fetch events' : 'async_fetchevents.php',
-                    'index' : 'index.php'
+                    'index' : 'index.php',
+                    'event info' : 'async-eventinfo.php'
     }
 
     LOCATIONGROUPS_ID = {'cabina' : '6',
@@ -93,14 +94,14 @@ class AsimutSession (object):
 
         parsed_html = lxml.document_fromstring(response)
 
-        self.own_book_ids = [{'room' : Node.getnext().text_content(),
+        self.own_books_id = [{'room' : Node.getnext().text_content(),
                               'book_id' : Node.attrib['rel'],
                               'time' : Node.getparent().getparent()
                                            .getparent().getprevious()
                                            .text_content()}
                              for Node in parsed_html.find_class('event-link')]
 
-        print self.own_book_ids
+        print self.own_books_id
 
 
     def book_room(self, room, date, starttime, endtime, description=''):
@@ -120,7 +121,7 @@ class AsimutSession (object):
         url = "%s%s" % (self.BASE_URL, self.SERVER_CALLS['book'])
         self.requests_session.post(url, data=payload)
 
-    def fetch_unavailable_rooms_id(self, date, roomgroup_id):
+    def fetch_unavailability(self, date, roomgroup_id):
 
         url = "%s%s" % (self.BASE_URL, self.SERVER_CALLS['fetch events'])
         date = "-".join(reversed(date.split('/')))
@@ -130,7 +131,8 @@ class AsimutSession (object):
         }
         ## DOME: This isn't part of this function, have to be rewritten.
         response = self.requests_session.get(url, params=payload).json()
-        return [book[0] for book in response]
+
+        books_id = [book[0] for book in response]
 
 
     def get_last_book_id(self):
@@ -138,7 +140,7 @@ class AsimutSession (object):
         self.fetch_booked_list
 
         return sorted([book_record['book_id']
-                       for book_record in self.own_book_ids])[-1]
+                       for book_record in self.own_books_id])[-1]
 
 
     def cancel_book(self, book_id):
