@@ -129,10 +129,24 @@ class AsimutSession (object):
                    'endtime' : date,
                    'locationgroup' : "-%s" % roomgroup_id
         }
-        ## DOME: This isn't part of this function, have to be rewritten.
+
         response = self.requests_session.get(url, params=payload).json()
 
-        books_id = [book[0] for book in response]
+        url = "%s%s" % (self.BASE_URL, self.SERVER_CALLS['event info'])
+        booksrooms_id = [(book[0], book[3]) for book in response]
+        books_times = []
+
+        for book_id, room_id in booksrooms_id:
+            payload = {'id' : book_id}
+            book_info = self.requests_session.get(url, params=payload).content
+            book_info = lxml.fragment_fromstring(book_info)
+            parsed_time = book_info[0].text_content().split(' ')
+            books_times.append({'book_id' : book_id,
+                                'room_id' : room_id,
+                                'start' : parsed_time[0],
+                                'end' : parsed_time[-1]})
+
+        return books_times
 
 
     def get_last_book_id(self):
@@ -196,6 +210,7 @@ if __name__ == "__main__":
         print Session.cancel_book(Session.get_last_book_id())
         Session.fetch_booked_list()
         print Session.current_time_availability
+        print Session.fetch_unavailability(argv[4], '5')
     else:
         print "\nUsage: '$ python prototype.py <username> <password> " \
               "<room(ex:'A340')> <day(ex:'1/10/2013')> " \
