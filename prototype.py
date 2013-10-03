@@ -146,7 +146,25 @@ class AsimutSession (object):
                                 'start' : parsed_time[0],
                                 'end' : parsed_time[-1]})
 
-        return books_times
+        books_times_2 = []
+        grid_start = 23014440.0   # Web variable
+        constant = 1920   # Not sure why, but it works
+        for book in response:
+            start_secs = (int(book[1]) - grid_start + constant) * 60
+            start_tuple = time.gmtime(start_secs)
+            end_tuple = time.gmtime(start_secs + (int(book[2])*60))
+            books_times_2.append({'book_id' : book[0],
+                                  'room_id' : book[3],
+                                  'start' : '%.2i:%.2i' % start_tuple[3:5],
+                                  'end' : '%.2i:%.2i' % end_tuple[3:5]
+            })
+
+        if books_times != books_times_2:
+            print books_times_2[25]
+            print books_times[25]
+            exit('Error, books_times_2 is worng')
+
+        return books_times_2
 
 
     def get_last_book_id(self):
