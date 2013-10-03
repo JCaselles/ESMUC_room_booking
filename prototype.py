@@ -101,7 +101,7 @@ class AsimutSession (object):
                                            .text_content()}
                              for Node in parsed_html.find_class('event-link')]
 
-        print self.own_books_id
+        return self.own_books_id
 
 
     def book_room(self, room, date, starttime, endtime, description=''):
@@ -201,14 +201,14 @@ if __name__ == "__main__":
     if len(argv) == 8:
         Session = AsimutSession()
         Session.login(argv[1], argv[2])
-        Session.fetch_booked_list()
-        Session.book_room(argv[3], argv[4],
+        print Session.fetch_booked_list()
+        print Session.book_room(argv[3], argv[4],
                                     argv[5], argv[6],
                                     argv[7]
         )
-        Session.fetch_booked_list()
+        print Session.fetch_booked_list()
         print Session.cancel_book(Session.get_last_book_id())
-        Session.fetch_booked_list()
+        print Session.fetch_booked_list()
         print Session.current_time_availability
         print Session.fetch_unavailability(argv[4], '5')
     else:
