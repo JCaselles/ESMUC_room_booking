@@ -9,9 +9,10 @@
 from prototype import AsimutSession
 import daemon
 from time import sleep
-from datetime import time, datetime, timedelta
+from datetime import datetime, timedelta
 from os.path import expanduser
 from os import makedirs
+from sys import argv
 
 try:
     makedirs(expanduser('~/.esmuc_aules'))
@@ -24,48 +25,64 @@ context = daemon.DaemonContext(
     umask=002
 )
 
+std_ioe = open (expanduser('~/.esmuc_aules/.daemon_io.log'), 'w')
+
+context.stdout = std_ioe
+context.stderr = std_ioe
+
+room = argv[1]
+date = argv[2]
+starttime = argv[3]
+endtime = argv[4]
+description = argv[5]
+
 with context:
-    while True:
-        with open('.asimut_login') as login_credentials:
-            user = login_credentials.readline().rstrip('\n')
-            password = login_credentials.readline().rstrip('\n')
+    with open('.asimut_login') as login_credentials:
+        user = login_credentials.readline().rstrip('\n')
+        password = login_credentials.readline().rstrip('\n')
 
-        now_time = datetime.today()
-        future_time = datetime(now_time.year, now_time.month, now_time.day, 6, 28)
-        if now_time.hour > 6 or (now_time.hour == 6 and now_time.minute >= 30):
-            future_time += timedelta(days=1)
-        sleep((future_time-now_time).total_seconds())
+    book_time = datetime(int(date[-4:]), int(date[3:5]), int(date[:2]),
+                                            int(endtime[:2]), int(endtime[-2:]))
+    book_time -= timedelta(days=1, hours=2)
 
-        session = AsimutSession()
-        session.login(user, password)
+    login_time = book_time - timedelta(minutes=2)
+    sleep((login_time-datetime.now()).total_seconds())
 
-        fire_time = datetime(future_time.year, future_time.month, future_time.day,
-                                                                        6, 29, 45)
-        sleep((fire_time-future_time).total_seconds())
+    """ Perform login 2 minutes before booking """
+    session = AsimutSession()
+    session.login(user, password)
 
-        book_date = future_time + timedelta(days=1)
-        date = "%i/%i/%i" % (book_date.day, book_date.month, book_date.year)
-        room = 'C117'
-        starttime = '08:00'
-        endtime = '08:30'
-        description = ''
-        response = {'class' : '', 'text' : 'NO success'}
-        success_response = 'message-success'
-        attempts = 0
+    fire_time = book_time - timedelta(seconds=15)
+    sleep((fire_time-datetime.now()).total_seconds())
 
-        while (response['class'] != success_response or
-               time.today().minute < 31):
-            response = session.book_room(room, date, starttime,
-                                                endtime, description)
-            attempts += 1
+    """ Start requesting the server 45 seconds before booking opens """
+    response = {'class' : '', 'text' : 'NO success'}
+    success_response = 'message-success'
+    attempts = 0
 
-        with open('.cron_booking.log', 'a'):
-            booking_log.write("%s - room: %s, from %s to %s. [%s]\n" % (date,
-                                                                        room,
-                                                                        starttime,
-                                                                        endtime,
-                                                                        description))
-            booking_log.write("\t-- %s in %i attempts.\n\n" % (response['text'],
-                                                               attempts))
+    while (response['class'] != success_response and
+           datetime.today() < (book_time + timedelta(seconds=15))):
+        response = session.book_room(room, date, starttime,
+                                            endtime, description)
+        attempts += 1
+        print response
+        print attempts
 
+    """ Register the booking results """
+    with open('.cron_booking.log', 'a') as booking_log:
+        booking_log.write("-" * 10)
+        booking_log.write("\n%s - room: %s, from %s to %s. [%s]\n"
+                          % (date, room, starttime, endtime, description))
+        booking_log.write("\t-- %s in %i attempts.\n\n" % (response['text'],
+                                                           attempts))
+        booking_log.write("Current books:\n")
+        booked_list = session.fetch_booked_list()
+        for book in booked_list:
+            booking_log.write("\t- %s at %s\n" % (book['room'], book['time']))
+
+        response = session.cancel_book(session.get_last_book_id())
+        if response['class'] == success_response:
+            booking_log.write('\nTest book has been successfuly canceled\n')
+        booking_log.write('-' * 10)
+        booking_log.write('\n' * 2)
 
