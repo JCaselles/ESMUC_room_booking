@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # coding=utf-8
-
+#
 # Python prototipe for an Android app to automatize login and room
 # reservation of the Escola Superior de Musica de Catalunya - Asimut
 # system.
 #
-# Copyright 2013 Arnau Orriols. All Rights Reserved.
+# Author: Arnau Orriols
 
 import requests
 import time
@@ -79,7 +79,7 @@ class AsimutSession (object):
         self.requests_session = requests.session()
         self.requests_session.cookies = \
         requests.cookies.cookiejar_from_dict({'asimut-width' : '640'})
-        self.requests_session.post(url, data=payload).content
+        return self.requests_session.post(url, data=payload).content
 
 
     def fetch_booked_list(self):
@@ -119,7 +119,7 @@ class AsimutSession (object):
         }
 
         url = "%s%s" % (self.BASE_URL, self.SERVER_CALLS['book'])
-        self.requests_session.post(url, data=payload)
+        return self.requests_session.post(url, data=payload).json
 
     def fetch_unavailability(self, date, roomgroup_id):
 
