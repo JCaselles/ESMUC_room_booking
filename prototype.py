@@ -79,7 +79,7 @@ class AsimutSession (object):
         self.requests_session = requests.session()
         self.requests_session.cookies = \
         requests.cookies.cookiejar_from_dict({'asimut-width' : '640'})
-        return self.requests_session.post(url, data=payload).content
+        return self.requests_session.post(url, data=payload)
 
 
     def fetch_booked_list(self):
