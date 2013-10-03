@@ -73,7 +73,7 @@ with context:
         booking_log.write("-" * 10)
         booking_log.write("\n%s - room: %s, from %s to %s. [%s]\n"
                           % (date, room, starttime, endtime, description))
-        booking_log.write("\t-- %s in %i attempts.\n\n" % (response['text'],
+        booking_log.write("\t-- %s after %i attempts.\n\n" % (response['text'],
                                                            attempts))
         booking_log.write("Current books:\n")
         booked_list = session.fetch_booked_list()
