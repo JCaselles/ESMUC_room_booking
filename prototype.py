@@ -119,7 +119,7 @@ class AsimutSession (object):
         }
 
         url = "%s%s" % (self.BASE_URL, self.SERVER_CALLS['book'])
-        return self.requests_session.post(url, data=payload).json
+        return self.requests_session.post(url, data=payload).json()[0]
 
     def fetch_unavailability(self, date, roomgroup_id):
 
@@ -162,7 +162,7 @@ class AsimutSession (object):
         payload = {'id' : book_id}
         url = "%s%s" % (self.BASE_URL, self.SERVER_CALLS['cancel'])
 
-        response = self.requests_session.get(url, params=payload).json()
+        response = self.requests_session.get(url, params=payload).json()[0]
         return response
 
     def find_room_id_by_name(self, room_name):
