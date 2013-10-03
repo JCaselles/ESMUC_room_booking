@@ -134,8 +134,9 @@ class AsimutSession (object):
 
         url = "%s%s" % (self.BASE_URL, self.SERVER_CALLS['event info'])
         booksrooms_id = [(book[0], book[3]) for book in response]
-        books_times = []
 
+        """
+        books_times = []
         for book_id, room_id in booksrooms_id:
             payload = {'id' : book_id}
             book_info = self.requests_session.get(url, params=payload).content
@@ -145,7 +146,15 @@ class AsimutSession (object):
                                 'room_id' : room_id,
                                 'start' : parsed_time[0],
                                 'end' : parsed_time[-1]})
+        """
 
+        #  TODO:
+        #    - Make sure it always work before ditching the previous
+        #      procedure. This is rather arbitrary (specially the
+        #      constant, which I can't really explain). grid_start is
+        #      an arbitrary constant used in the web. This is more or
+        #      less the procedure used in the web for rendering the
+        #      chart.
         books_times_2 = []
         grid_start = 23014440.0   # Web variable
         constant = 1920   # Not sure why, but it works
@@ -159,10 +168,12 @@ class AsimutSession (object):
                                   'end' : '%.2i:%.2i' % end_tuple[3:5]
             })
 
+        """
         if books_times != books_times_2:
             print books_times_2[25]
             print books_times[25]
             exit('Error, books_times_2 is worng')
+        """
 
         return books_times_2
 
