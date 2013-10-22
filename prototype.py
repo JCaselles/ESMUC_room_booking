@@ -83,6 +83,18 @@ class AsimutSession (object):
 
 
     def fetch_booked_list(self):
+        """
+        Updates current_time_availability, which is used to fetch the
+        current booked rooms of the user.
+
+        Returns a list of dictionaries, each containing the data of
+        the book as follows:
+
+            {'room' : <number_of_room>,
+             'book_id' : <id_of_book>,
+             'time' : <duration_of_room>}
+
+        """
 
         self.update_current_time_availability()
         payload = {'dato' : self.current_time_availability['start']['date'],
