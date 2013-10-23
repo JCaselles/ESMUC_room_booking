@@ -207,6 +207,7 @@ class AsimutSession (object):
         return response
 
     def find_room_id_by_name(self, room_name):
+        """ Translate room name, as "A340" to proper room id """
 
         for room_group in self.LOCATIONGROUPS_ID.itervalues():
             if room_name in self.LOCATIONS_ID[room_group].keys():
@@ -215,6 +216,7 @@ class AsimutSession (object):
         exit("Room doesn't exist")
 
     def find_roomgroup_by_room_id(self, room_id):
+        """ Returns the room group id of a room """
 
         for room_group in self.LOCATIONGROUPS_ID.itervalues():
             if room_id in self.LOCATIONS_ID[room_group].values():
@@ -222,6 +224,19 @@ class AsimutSession (object):
         exit("Error")
 
     def update_current_time_availability(self):
+        """
+        Updates the current_time_availability variable, which
+        represents the time available for booking, which right now is
+        26 hours from the moment of booking.
+
+        current_time_availability is a dict with the following
+        structure:
+            {'start' : {'date' : <date_of_range_start>,
+                        'time' : <time_of_range_start>,
+                        'secs' : <seconds_since_epoch_of_range_start>},
+            TO BE FINISHED
+            }
+        """
 
         start_secs = time.time()
         threshold = 93600
